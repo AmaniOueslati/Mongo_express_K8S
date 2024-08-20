@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment  # Corrected the typo from "deployement" to "deployment"
+  labels:
+    app: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+      # This selector matches the labels defined in the template to manage the pods created by this deployment.
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:latest
+        ports:
+        - containerPort: 27017
+        env:
+        # Environment variables for MongoDB credentials
+        # Use secrets to securely inject sensitive data (username and password) into the pod.
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: mongodb-root-username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: mongodb-root-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+  labels:
+    app: mongodb
+spec:
+  type: ClusterIP  # This makes the Service only accessible within the cluster.
+  selector:
+    app: mongodb
+  ports:
+    - protocol: TCP
+      port: 27017         # Port that the Service will expose.
+      targetPort: 27017   # Port on the MongoDB container.
+
